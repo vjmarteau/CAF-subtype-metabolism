@@ -70,3 +70,18 @@ saveRDS(as.matrix(count_mat), file = file.path(params$results, "produced_data/01
 saveRDS(metadata, file = file.path(params$results, "produced_data/01-metadata.rds"))
 saveRDS(key, file = file.path(params$results, "produced_data/01-key.rds"))
 ```
+
+# get metabolic genes (kegg) from "EGSEAdata" (MSigDB)
+```{r}
+data(kegg.pathways)
+
+# sig: signalling, met: metabolic, dise: disease
+names(kegg.pathways$mouse)
+
+# get kegg gene sets as entrez_IDs
+kegg_gene_sets <- kegg.pathways$mouse$kg.sets[kegg.pathways$mouse$met.idx]
+
+# show current version and latest download/update date (this is quite old ...)
+#egsea.data(species = "mouse")
+saveRDS(kegg_gene_sets, file = file.path(params$results, "produced_data/01-kegg_gene_sets.rds"))
+```
