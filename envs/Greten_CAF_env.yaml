@@ -1,0 +1,27 @@
+name: CAF
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-rmarkdown
+  - r-tidyverse
+  - r-readxl
+  - bioconductor-summarizedexperiment
+  - bioconductor-rtracklayer
+  - bioconductor-deseq2
+  - bioconductor-ihw
+  - r-pheatmap
+  - bioconductor-variancepartition
+  - bioconductor-enhancedvolcano
+  - r-dendextend
+  - r-gplots
+  - bioconductor-topgo
+  - bioconductor-pcaexplorer
+  - bioconductor-clusterprofiler
+  - bioconductor-reactomepa
+  - bioconductor-fgsea
+  - bioconductor-annotationdbi
+  - bioconductor-org.mm.eg.db
+  - bioconductor-egseadata
