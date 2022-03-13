@@ -1,0 +1,52 @@
+---
+title: "03-DESeq2_analysis"
+author: "Valentin Marteau"
+params:
+  data: "../data"
+  lib:  "../lib"
+  results:  "../results"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# Load required packages
+library(conflicted)
+library(tidyverse)
+library(DESeq2)
+library(IHW)
+
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+# Load custom functions
+source(file.path(params$lib, "run_DESeq2.R"))
+```
+
+```{r}
+# read data into memory
+count_mat <- readRDS(file = file.path(params$results, "produced_data/01-count_mat.rds"))
+metadata <- readRDS(file = file.path(params$results, "produced_data/01-metadata.rds"))
+key <- readRDS(file = file.path(params$results, "produced_data/01-key.rds"))
+```
+
+```{r}
+# list models for DESeq2
+model <- ~condition
+
+# list contrasts for DESeq2
+contrast <- list(c("condition", "Ctrl", "APTK"),
+                 c("condition", "Ctrl", "APTAK"),
+                 c("condition", "APTK", "APTAK"))
+
+res_list <- run_DESeq2(count_mat, metadata, model, contrast, key)
+
+saveRDS(res_list, file = file.path(params$results, "produced_data/res_list.rds"))
+```
+
