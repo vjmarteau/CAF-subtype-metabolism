@@ -66,7 +66,10 @@ metadata <- tibble(original_id = colnames(select(raw_data, matches(c("WT", "APT"
 key <- raw_data |>
   select(-one_of(metadata$original_id))
 
-saveRDS(as.matrix(count_mat), file = file.path(params$results, "produced_data/01-count_mat.rds"))
+count_mat <- as.matrix(count_mat)
+mode(count_mat) <- "integer"
+
+saveRDS(count_mat, file = file.path(params$results, "produced_data/01-count_mat.rds"))
 saveRDS(metadata, file = file.path(params$results, "produced_data/01-metadata.rds"))
 saveRDS(key, file = file.path(params$results, "produced_data/01-key.rds"))
 ```
