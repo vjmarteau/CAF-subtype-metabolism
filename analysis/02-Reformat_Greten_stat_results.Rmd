@@ -1,0 +1,68 @@
+---
+title: "02-Reformat_stat_results_Greten"
+author: "Valentin Marteau"
+params:
+  data: "../data"
+  lib:  "../lib"
+  results:  "../results"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# Load required packages
+library(conflicted)
+library(tidyverse)
+library(readr)
+
+conflict_prefer("rename", "dplyr")
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+# Genome wide annotation for Mouse
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+```
+
+```{r}
+# Read data into memory
+Ctrl_APTKA  <- read_csv2(file.path(params$data, "RNAseq/statResult_WTvsAPTAK-Greten.csv"))
+Ctrl_APTK  <- read_csv2(file.path(params$data, "RNAseq/statResult_WTvsAPTK-Greten.csv"))
+APTKA_APTK  <- read_csv2(file.path(params$data, "RNAseq/statResult_APTAKvsAPTK-Greten.csv"))
+
+metadata <- readRDS(file.path(params$results, "produced_data/01-metadata.rds"))
+```
+
+```{r}
+# Reformat stat results Greten and store as list
+Reformat_stat_results_Greten <- function(dat) {
+  
+samples <- dat |>
+  select(matches(c("WT", "APT"))) |>
+  rename_with(~str_replace(., pattern = "WT-F1", replacement = "Ctrl")) |>
+  rename_all(~str_replace_all(., pattern = "-", replacement = "_")) |>
+  add_column(entrez_id = mapIds(org.Mm.eg.db,
+                              keys = APTKA_APTK$ensembl_gene_id,
+                              column="ENTREZID",
+                              keytype="ENSEMBL",
+                              multiVals="first"))
+
+dat <- bind_cols(select(dat, -starts_with(c("WT", "APT"))), samples) |>
+  relocate(entrez_id, .after = ensembl_gene_id) |> 
+  rename("gene_id" = "ensembl_gene_id", "symbol" = "external_gene_name") |>
+  arrange(padj)
+
+return(dat)
+}
+
+res_list_Greten <- lapply(list(Ctrl_APTKA, Ctrl_APTK, APTKA_APTK),
+                          Reformat_stat_results_Greten)
+
+saveRDS(res_list_Greten, file = file.path(params$results, "produced_data/02-res_list_Greten.rds"))
+```
