@@ -59,14 +59,16 @@ count_mat <- raw_data |>
 # generate metadata
 metadata <- tibble(original_id = colnames(select(raw_data, matches(c("WT", "APT")))),
                    label = factor(colnames(count_mat)),
-                   condition = factor(str_remove_all(label, pattern = "_[:digit:]"))) |>
+                   condition = factor(str_remove_all(label, pattern = "_[:digit:]"), levels = c("Ctrl", "APTK", "APTAK"))) |>
   mutate(label2 = label) |>
-  column_to_rownames(var = "label2")
+  column_to_rownames(var = "label2") |>
+  arrange(condition)
 
 key <- raw_data |>
   select(-one_of(metadata$original_id))
 
 count_mat <- as.matrix(count_mat)
+count_mat <- count_mat[, c(1, 2, 3, 8, 9, 10, 11, 4, 5, 6, 7)]
 mode(count_mat) <- "integer"
 
 saveRDS(count_mat, file = file.path(params$results, "produced_data/01-count_mat.rds"))
