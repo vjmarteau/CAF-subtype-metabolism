@@ -1,0 +1,72 @@
+---
+title: "01-Reformat_RNAseq_data"
+author: "Valentin Marteau"
+params:
+  data: "../data"
+  lib:  "../lib"
+  results:  "../results"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# load required packages
+library(conflicted)
+library(readxl)
+library(tidyverse)
+
+conflict_prefer("rename", "dplyr")
+conflict_prefer("select", "dplyr")
+
+# Genome wide annotation for Mouse
+library(AnnotationDbi)
+library(org.Mm.eg.db)
+
+# Gene set collections from MSigDB and GeneSetDB
+library(EGSEAdata)
+```
+
+# 1. Reformat raw counts data from Frankfurt, generate metadata and count matrix
+??? df %<>% foo() is shorthand for df <- df %>% foo() !!
+```{r}
+# read data into memory
+raw_data <- read_excel(file.path(params$data, "RNAseq/RawData_Greten.xls"))
+
+# convert ensembl to entrez IDs
+raw_data$entrez_id = mapIds(org.Mm.eg.db,
+                            keys = raw_data$ensembl_gene_id,
+                            column="ENTREZID",
+                            keytype="ENSEMBL",
+                            multiVals="first")
+
+raw_data <- raw_data |> 
+  relocate(entrez_id, .after = ensembl_gene_id) |> 
+  rename("gene_id" = "ensembl_gene_id", "symbol" = "external_gene_name")
+
+# subset for counts and generate matrix
+count_mat <- raw_data |>
+  column_to_rownames(var = "gene_id") |>
+  select(matches(c("WT", "APT"))) |>
+  rename_with(~str_replace(., pattern = "WT-F1", replacement = "Ctrl")) |>
+  rename_all(~str_replace_all(., pattern = "-", replacement = "_"))
+
+# generate metadata
+metadata <- tibble(original_id = colnames(select(raw_data, matches(c("WT", "APT")))),
+                   label = factor(colnames(count_mat)),
+                   condition = factor(str_remove_all(label, pattern = "_[:digit:]"))) |>
+  mutate(label2 = label) |>
+  column_to_rownames(var = "label2")
+
+key <- raw_data |>
+  select(-one_of(metadata$original_id))
+
+saveRDS(as.matrix(count_mat), file = file.path(params$results, "produced_data/01-count_mat.rds"))
+saveRDS(metadata, file = file.path(params$results, "produced_data/01-metadata.rds"))
+saveRDS(key, file = file.path(params$results, "produced_data/01-key.rds"))
+```
