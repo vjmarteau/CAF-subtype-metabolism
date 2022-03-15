@@ -1,0 +1,81 @@
+---
+title: "04-RNAseq_visual_data_exploration"
+author: "Valentin Marteau"
+params:
+  data: "../data"
+  lib:  "../lib"
+  results:  "../results"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# Load required packages
+library(conflicted)
+library(tidyverse)
+library(DESeq2)
+library(pheatmap)
+library(RColorBrewer)
+library(PoiClaClu)
+library(variancePartition)
+library(gridExtra)
+library(cowplot)
+
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+```
+
+```{r}
+# Read data into memory
+count_mat <- readRDS(file = file.path(params$results, "produced_data/01-count_mat.rds"))
+metadata <- readRDS(file = file.path(params$results, "produced_data/01-metadata.rds"))
+
+# Set ggplot basic theme
+theme_set(
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 26),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        axis.line = element_line(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.minor = element_line(linetype = "dotted"))
+  )
+```
+
+# Normalize counts using DESeq2 rlog and vst transformations for exploratory analysis
+Have a look at [End-to-end RNA-Seq workflow 2015](https://www.bioconductor.org/help/course-materials/2015/CSAMA2015/lab/rnaseqCSAMA.html)
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = count_mat,
+                              colData = metadata,
+                              design = ~condition)
+
+# rlog and vst transformation
+dds <- estimateSizeFactors(dds)
+rld <- rlog(dds)
+vst <- vst(dds, blind = TRUE)
+fpm <- fpm(dds)
+#fpkm
+```
+
+```{r}
+plot_layout <- function(df, x_string, y_string, title) {
+  ggplot(df, aes_string(x = x_string, y = y_string)) +
+    geom_point(size = 0.3) +
+    ggtitle(title)
+}
+
+# Have a look at different transformations by plotting first against second sample
+p <- plot_grid(plot_layout(as_tibble(log2(1 + counts(dds, normalized = TRUE))),"Ctrl_1", "Ctrl_2", "log2"),
+               plot_layout(as_tibble(assay(rld)),"Ctrl_1", "Ctrl_2", "rlog"),
+               plot_layout(as_tibble(assay(vst)),"Ctrl_1", "Ctrl_2", "vst"),
+               plot_layout(as_tibble(log2(fpm)),"Ctrl_1", "Ctrl_2", "fpm"))
+
+ggsave(file.path(params$results, "figures/04-transformations.pdf"), plot = p, width = 297, height = 210, units = "mm")
+```
+Based on the plots above I will use the rld data for subsequent plots.
