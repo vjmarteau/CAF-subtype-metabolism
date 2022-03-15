@@ -132,3 +132,13 @@ p <- pheatmap(samplePoisDistMatrix,
 
 ggsave(file.path(params$results, "figures/04-Sample-distances_Poisson.pdf"), plot = p, width = 297, height = 210, units = "mm")
 ```
+
+# Pairwise sample correlations
+```{r}
+# Compute pairwise correlation values
+rld_cor <- cor(assay(rld))
+p <- pheatmap(rld_cor,
+         annotation = select(metadata, condition))
+
+ggsave(file.path(params$results, "figures/04-Pairwise-correlations.pdf"), plot = p, width = 297, height = 210, units = "mm")
+```
