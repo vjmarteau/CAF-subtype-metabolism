@@ -30,23 +30,42 @@ source(file.path(params$lib, "run_DESeq2.R"))
 ```
 
 ```{r}
-# read data into memory
+# Read data into memory
 count_mat <- readRDS(file = file.path(params$results, "produced_data/01-count_mat.rds"))
 metadata <- readRDS(file = file.path(params$results, "produced_data/01-metadata.rds"))
 key <- readRDS(file = file.path(params$results, "produced_data/01-key.rds"))
 ```
 
 ```{r}
-# list models for DESeq2
+# Choose model design
 model <- ~condition
 
-# list contrasts for DESeq2
+# List contrasts for DESeq2
 contrast <- list(c("condition", "Ctrl", "APTK"),
                  c("condition", "Ctrl", "APTAK"),
                  c("condition", "APTK", "APTAK"))
 
 res_list <- run_DESeq2(count_mat, metadata, model, contrast, key)
 
-saveRDS(res_list, file = file.path(params$results, "produced_data/res_list.rds"))
+saveRDS(res_list, file = file.path(params$results, "produced_data/03-res_list.rds"))
 ```
+
+# Have a look at some summary stats
+```{r}
+# Print number of significant genes
+lapply(res_list, function(res) {
+  c("< 1%" = sum(res$padj < 0.01, na.rm = TRUE),
+    "< 5%" = sum(res$padj < 0.05, na.rm = TRUE))
+  })
+```
+```{r}
+# Histogram of p values
+lapply(res_list, function(res) {
+  hist(res$pvalue, breaks = 20, col = "grey50", border = "white")
+  })
+```
+
+
+
+
 
