@@ -64,8 +64,39 @@ lapply(res_list, function(res) {
   hist(res$pvalue, breaks = 20, col = "grey50", border = "white")
   })
 ```
+# Plot individual genes
+```{r}
+# Set ggplot basic theme
+theme_set(
+  theme(panel.grid = element_blank(),
+        text = element_text(size = 26),
+        plot.title = element_text(size = 16, hjust = 0.5),
+        axis.line = element_line(),
+        panel.background = element_blank(),
+        panel.border = element_blank(),
+        panel.grid.minor = element_line(linetype = "dotted"))
+  )
+```
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = count_mat,
+                              colData = metadata,
+                              design = ~condition)
 
+# Visualize the counts for a particular gene
+goi <- "Slc16a3"
+gene <- res_list[[1]] |> filter(symbol == goi) |> pull("gene_id")
+data <- plotCounts(dds, gene = gene,
+                   intgroup = c("condition"), returnData = TRUE)
 
+ggplot(data, aes(x = condition, y = count)) +
+  scale_y_log10() +
+  geom_point(aes(fill = condition), size = 8,
+             shape = 21, position = position_jitter(width = 0.1, height = 0)) +
+  ggtitle(goi)
 
-
-
+# Center data points instead of random jitter
+ggplot(data, aes(x = condition, y = count, fill = condition)) +
+  scale_y_log10() + 
+  geom_dotplot(dotsize = 2, binaxis = "y", stackdir = "center") +
+  ggtitle(goi)
+```
