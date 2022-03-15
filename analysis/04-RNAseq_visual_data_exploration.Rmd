@@ -142,3 +142,44 @@ p <- pheatmap(rld_cor,
 
 ggsave(file.path(params$results, "figures/04-Pairwise-correlations.pdf"), plot = p, width = 297, height = 210, units = "mm")
 ```
+
+# Partitioning gene expression variability into different components
+Assessing the contribution of variance in expression models at the gene level using the "variancePartition" package
+```{r}
+# Estimate library size correction scaling factors
+dds <- estimateSizeFactors(dds)
+
+# identify genes that pass expression cutoff
+isexpr <- rowSums(fpm(dds) > 1) >= 0.5 * ncol(dds)
+
+# compute log2 Fragments Per Million
+# Alternatively, fpm(), fpkm(), vst() or rlog() could be used
+#quantLog <- log2(fpm(dds)[isexpr, ] + 1)
+quantLog <- assay(rlog(dds))[isexpr, ] + 1
+
+# Define formula
+form <- ~ (1|condition)
+
+# Run variancePartition analysis
+varPart <- fitExtractVarPartModel(quantLog, form, metadata)
+
+# sort variables (i.e. columns) by median fraction of variance explained
+vp <- sortCols(varPart)
+```
+```{r}
+# Bar plot of variance fractions for the first 10 genes
+plotPercentBars(vp[1:10, ])
+```
+```{r}
+# violin plot of contribution of each variable to total variance
+p <- plotVarPart(vp)
+ggsave(file.path(params$results, "figures/04-variancePartition.pdf"), plot = p, width = 297, height = 210, units = "mm")
+```
+
+```{r}
+# sort genes based on variance explained by Individual features
+head(varPart[order(varPart$condition, decreasing = TRUE), ])
+
+median(varPart$condition)
+median(varPart$Residuals)
+```
