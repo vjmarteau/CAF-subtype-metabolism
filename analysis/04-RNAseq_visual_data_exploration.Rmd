@@ -79,3 +79,26 @@ p <- plot_grid(plot_layout(as_tibble(log2(1 + counts(dds, normalized = TRUE))),"
 ggsave(file.path(params$results, "figures/04-transformations.pdf"), plot = p, width = 297, height = 210, units = "mm")
 ```
 Based on the plots above I will use the rld data for subsequent plots.
+
+# Principal Component Analysis
+```{r}
+# DESeq2 PCA
+#plotPCA(rld, intgroup = "condition")
+```
+## Plot pca using ggplot
+```{r}
+# Extract pca coordinates
+pcaData <- plotPCA(rld, intgroup = c("condition"), returnData = TRUE)
+percentVar <- round(100 * attr(pcaData, "percentVar"), digits = 1)
+
+p <- ggplot(pcaData, aes(x = PC1, y = PC2)) +
+  geom_point(aes(fill = condition),
+             size = 8,
+             shape = 21) +
+  scale_fill_manual(values = c("#A6D854", "#FC8D62", "#80B1D3")) +
+  xlab(paste0("PC1: ", percentVar[1], "% variance")) +
+  ylab(paste0("PC2: ", percentVar[2], "% variance")) +
+  ggtitle("PCA Transcriptome")
+
+ggsave(file.path(params$results, "figures/04-PCA.pdf"), plot = p, width = 297, height = 210, units = "mm")
+```
