@@ -1,0 +1,70 @@
+---
+title: "05-Buechler_mouse_fibroblast_gene_sets"
+author: "Valentin Marteau"
+params:
+  data: "../data"
+  lib:  "../lib"
+  results:  "../results"
+output:
+  html_notebook:
+    theme: spacelab
+    highlight: textmate
+    toc: yes
+    number_sections: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r, results = "hide"}
+# Load required packages
+library(conflicted)
+library(tidyverse)
+library(readxl)
+
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+```
+
+# Download mouse fibroblast gene sets from Buechler et al. 2021 (DOI:10.1038/s41586-021-03549-5)
+Includes healthy and disease fibroblast scRNAseq signatures across 17 tissues. 
+Mouse steady-state/perturbed data available at https://www.fibroxplorer.com/download
+
+```{r}
+# Get steady_state_DEGs
+Buechler_steady_state_DEGs <- lapply(excel_sheets(file.path(params$results, "produced_data/41586_2021_3549_MOESM5_ESM.xlsx")),
+                                     function(x) read_excel(path = file.path(params$results, "produced_data/41586_2021_3549_MOESM5_ESM.xlsx"),
+                                                            sheet = x))
+
+names(Buechler_steady_state_DEGs) <- excel_sheets(file.path(params$results, "produced_data/41586_2021_3549_MOESM5_ESM.xlsx"))
+
+Buechler_steady_state_DEGs <- lapply(Buechler_steady_state_DEGs, function(x) x[!(names(x) %in% c("...8"))])
+
+names(Buechler_steady_state_DEGs[[11]])[1] <- "Gene"
+names(Buechler_steady_state_DEGs[[12]])[1] <- "Gene"
+
+summary(Buechler_steady_state_DEGs)
+```
+```{r}
+# Get perturbed_state_DEGs
+Buechler_perturbed_state_DEGs <- lapply(excel_sheets(file.path(params$results, "produced_data/41586_2021_3549_MOESM6_ESM.xlsx")),
+                                     function(x) read_excel(path = file.path(params$results, "produced_data/41586_2021_3549_MOESM6_ESM.xlsx"),
+                                                            sheet = x))
+
+names(Buechler_perturbed_state_DEGs) <- excel_sheets(file.path(params$results, "produced_data/41586_2021_3549_MOESM6_ESM.xlsx"))
+
+Buechler_perturbed_state_DEGs <- lapply(Buechler_perturbed_state_DEGs, function(x) x[!(names(x) %in% c("...8"))])
+
+names(Buechler_perturbed_state_DEGs[[11]])[1] <- "Gene"
+names(Buechler_perturbed_state_DEGs[[12]])[1] <- "Gene"
+
+summary(Buechler_perturbed_state_DEGs)
+```
+```{r}
+# Subset for first 100 genes
+list_steady_state_DEGs <- lapply(Buechler_steady_state_DEGs, function(x) x[1:100, ]$Gene)
+list_perturbed_state_DEGs <- lapply(Buechler_perturbed_state_DEGs, function(x) x[1:100, ]$Gene)
+```
+```{r}
+saveRDS(list_steady_state_DEGs, file = file.path(params$results, "produced_data/05-Buechler_steady_state_DEGs.rds"))
+saveRDS(list_perturbed_state_DEGs, file = file.path(params$results, "produced_data/05-Buechler_perturbed_state_DEGs.rds"))
+```
