@@ -44,8 +44,8 @@ model <- ~condition
 
 # List contrasts for DESeq2
 contrast <- list(c("condition", "Ctrl", "APTK"),
-                 c("condition", "Ctrl", "APTAK"),
-                 c("condition", "APTK", "APTAK"))
+                 c("condition", "Ctrl", "APTKA"),
+                 c("condition", "APTK", "APTKA"))
 
 res_list <- run_DESeq2(count_mat, metadata, model, contrast, key)
 
@@ -69,10 +69,10 @@ lapply(res_list, function(res) {
 
 # Make volcano plots and label metabolism related genes
 ```{r}
-make_volcano <- function(de_res, kegg, no_labels, pCutoff, FCcutoff, prefix) {
+make_volcano <- function(de_res, kegg, nr_labels, pCutoff, FCcutoff, prefix) {
 
 # Get subset of metabolic genes in DESeq2 results
-  goi <- de_res |> filter(padj < pCutoff , entrez_id %in% kegg) |> top_n(no_labels) |> pull(symbol)
+  goi <- de_res |> filter(padj < pCutoff , entrez_id %in% kegg) |> top_n(nr_labels) |> pull(symbol)
   
   p <- EnhancedVolcano(
     toptable = de_res,
@@ -91,7 +91,7 @@ make_volcano <- function(de_res, kegg, no_labels, pCutoff, FCcutoff, prefix) {
 
 lapply(seq_along(res_list), function(i){
   make_volcano(res_list[[i]], kegg = unique(unlist(kegg_gene_sets)),
-               labels = 20, pCutoff = 0.05, FCcutoff = 2,
+               nr_labels = 20, pCutoff = 0.05, FCcutoff = 2,
                prefix = names(res_list[i]))
 })
 ```
