@@ -32,8 +32,6 @@ library(org.Mm.eg.db)
 library(EGSEAdata)
 ```
 
-# 1. Reformat raw counts data from Frankfurt, generate metadata and count matrix
-??? df %<>% foo() is shorthand for df <- df %>% foo() !!
 ```{r}
 # read data into memory
 raw_data <- read_excel(file.path(params$data, "RNAseq/RawData_Greten.xls"))
@@ -54,12 +52,13 @@ count_mat <- raw_data |>
   column_to_rownames(var = "gene_id") |>
   select(matches(c("WT", "APT"))) |>
   rename_with(~str_replace(., pattern = "WT-F1", replacement = "Ctrl")) |>
-  rename_all(~str_replace_all(., pattern = "-", replacement = "_"))
+  rename_all(~str_replace_all(., pattern = "-", replacement = "_")) |>
+  rename_all(~str_replace_all(., pattern = "APTAK", replacement = "APTKA"))
 
 # generate metadata
 metadata <- tibble(original_id = colnames(select(raw_data, matches(c("WT", "APT")))),
                    label = factor(colnames(count_mat)),
-                   condition = factor(str_remove_all(label, pattern = "_[:digit:]"), levels = c("Ctrl", "APTK", "APTAK"))) |>
+                   condition = factor(str_remove_all(label, pattern = "_[:digit:]"), levels = c("Ctrl", "APTK", "APTKA"))) |>
   mutate(label2 = label) |>
   column_to_rownames(var = "label2") |>
   arrange(condition)
